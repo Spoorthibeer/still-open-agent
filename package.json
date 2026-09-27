@@ -1,0 +1,20 @@
+{
+  "name": "still-open",
+  "version": "1.0.0",
+  "description": "Still Open — an on-call shift-handoff assistant that remembers what the ticket system left out.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@vectorize-io/hindsight-client": "^0.6.0",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "openai": "^4.104.0"
+  }
+}

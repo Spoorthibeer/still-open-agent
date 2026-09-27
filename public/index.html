@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Still Open</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #1c1e1b;
+      --bg-side: #171916;
+      --line: #2c302c;
+      --line-strong: #3a403a;
+      --text: #d6d3cb;
+      --muted: #8d9288;
+      --faint: #5e645c;
+      --accent: #c4922a;
+      --sans: "Segoe UI", "Helvetica Neue", sans-serif;
+      --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font: 13px/1.45 var(--sans);
+    }
+
+    button, input {
+      font: inherit;
+      color: inherit;
+      border-radius: 0;
+    }
+
+    button { cursor: pointer; }
+
+    .app {
+      display: flex;
+      min-height: 100vh;
+      align-items: stretch;
+    }
+
+    .sidebar {
+      width: 240px;
+      flex: none;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: var(--bg-side);
+      border-right: 1px solid var(--line);
+      padding: 14px 0;
+    }
+
+    .side-label {
+      margin: 0 14px 8px;
+      color: var(--faint);
+      font: 11px/1 var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .ticket {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      width: 100%;
+      margin: 0;
+      padding: 7px 14px 7px 12px;
+      border: 0;
+      border-left: 2px solid transparent;
+      background: transparent;
+      text-align: left;
+    }
+
+    .ticket.active {
+      border-left-color: var(--accent);
+      color: var(--text);
+    }
+
+    .ticket.placeholder {
+      color: var(--faint);
+      cursor: default;
+    }
+
+    .ticket-name { font-family: var(--mono); font-size: 12px; }
+
+    .ticket-status {
+      color: var(--faint);
+      font-size: 11px;
+    }
+
+    .workspace {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 36px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .crumbs {
+      display: flex;
+      gap: 6px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .crumbs .sep { color: var(--faint); }
+
+    .crumbs .here {
+      color: var(--text);
+      font-family: var(--mono);
+    }
+
+    .text-link, .text-btn {
+      background: transparent;
+      border: 0;
+      padding: 0;
+      color: var(--muted);
+    }
+
+    .text-link {
+      font-size: 12px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .text-link:hover, .text-btn:hover { color: var(--accent); }
+
+    .text-link:disabled, .text-btn:disabled {
+      color: var(--faint);
+      cursor: progress;
+    }
+
+    .alert {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 28px;
+      padding: 3px 16px;
+      background: #211e18;
+      border-bottom: 1px solid #3a3428;
+      box-shadow: inset 2px 0 0 var(--accent);
+      color: #e4d5b4;
+      font-size: 12px;
+    }
+
+    .alert.safe {
+      background: var(--bg);
+      border-bottom-color: var(--line);
+      box-shadow: inset 2px 0 0 var(--line-strong);
+      color: var(--muted);
+    }
+
+    .alert .icon {
+      width: 12px;
+      height: 12px;
+      flex: none;
+      color: var(--accent);
+    }
+
+    .alert.safe .icon { color: var(--muted); }
+
+    .alert .text-link { margin-left: auto; color: #e4d5b4; }
+    .alert.safe .text-link { color: var(--muted); }
+
+    .panel { padding: 14px 16px 24px; }
+
+    .ticket-head {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font: 15px/1.2 var(--mono);
+      font-weight: 500;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: #8d9288;
+    }
+
+    .updated {
+      margin-left: auto;
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .section-label {
+      margin: 14px 0 6px;
+      color: var(--faint);
+      font: 11px/1 var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .log-row, .compose {
+      display: grid;
+      grid-template-columns: 96px 88px 1fr;
+      gap: 12px;
+      align-items: baseline;
+      padding: 6px 0 6px 10px;
+      border-left: 1px solid var(--line-strong);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .log-time, .log-actor, .compose-time, .compose-actor {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .log-message { color: var(--text); }
+
+    .compose-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .compose-main input { flex: 1; }
+
+    .compose input {
+      width: 100%;
+      padding: 2px 0;
+      border: 0;
+      border-bottom: 1px solid transparent;
+      background: transparent;
+      outline: none;
+    }
+
+    .compose input:focus { border-bottom-color: var(--line-strong); }
+
+    .compose .text-btn {
+      flex: none;
+      border: 1px solid var(--line-strong);
+      padding: 2px 8px;
+      font-size: 12px;
+    }
+
+    .note-status {
+      grid-column: 3;
+      color: var(--faint);
+      font-size: 12px;
+    }
+
+    .verdict {
+      margin-top: 16px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .verdict-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .verdict-icon {
+      width: 12px;
+      height: 12px;
+      flex: none;
+      color: var(--muted);
+    }
+
+    .verdict-icon.stay { color: var(--accent); }
+
+    #answer { font-size: 13px; }
+
+    .check-btn {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid var(--line-strong);
+      padding: 3px 8px;
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .check-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .check-btn:disabled { color: var(--faint); cursor: progress; }
+
+    .error {
+      min-height: 1.2em;
+      margin: 6px 0 0;
+      color: var(--accent);
+      font-size: 12px;
+    }
+
+    #evidence-toggle { display: inline-block; margin-top: 8px; }
+
+    .evidence-list {
+      margin: 6px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .evidence-row {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 12px;
+      padding: 6px 0 6px 10px;
+      border-left: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .evidence-time {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .evidence-text { color: var(--text); white-space: pre-line; }
+
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <p class="side-label">Tickets</p>
+      <button class="ticket active" type="button" aria-current="true">
+        <span class="ticket-name">billing-webhook</span>
+        <span class="ticket-status">resolved</span>
+      </button>
+      <div class="ticket placeholder" aria-disabled="true">
+        <span class="ticket-name">invoice-replay</span>
+        <span class="ticket-status">investigating</span>
+      </div>
+      <div class="ticket placeholder" aria-disabled="true">
+        <span class="ticket-name">tax-export</span>
+        <span class="ticket-status">monitoring</span>
+      </div>
+      <div class="ticket placeholder" aria-disabled="true">
+        <span class="ticket-name">payout-lag</span>
+        <span class="ticket-status">monitoring</span>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <p class="crumbs">
+          <span>On-Call</span>
+          <span class="sep">/</span>
+          <span>Shift Handoff</span>
+          <span class="sep">/</span>
+          <span class="here">billing-webhook</span>
+        </p>
+        <button id="reset-demo" class="text-link" type="button">Reset demo</button>
+      </header>
+
+      <div id="shift-banner" class="alert stay" hidden>
+        <svg class="icon stay-icon" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M6 1.2 11 10.6H1L6 1.2z" fill="none" stroke="currentColor" stroke-width="1.1" />
+          <path d="M6 4.6v2.8" stroke="currentColor" stroke-width="1.1" />
+          <circle cx="6" cy="8.9" r="0.55" fill="currentColor" />
+        </svg>
+        <svg class="icon safe-icon" viewBox="0 0 12 12" aria-hidden="true" hidden>
+          <path d="M2.2 6.2 4.7 8.7 9.8 3.4" fill="none" stroke="currentColor" stroke-width="1.2" />
+        </svg>
+        <span id="banner-text"></span>
+        <button id="view-evidence" class="text-link" type="button">Show why</button>
+      </div>
+
+      <main class="panel">
+        <div class="ticket-head">
+          <h1>billing-webhook</h1>
+          <span class="badge"><span class="dot" aria-hidden="true"></span> resolved</span>
+          <span class="updated" id="updated"></span>
+        </div>
+
+        <p class="section-label">Activity</p>
+        <div id="log"></div>
+        <form class="compose" id="compose">
+          <span class="compose-time" id="compose-time"></span>
+          <span class="compose-actor">Handoff note</span>
+          <span class="compose-main">
+            <input id="note" type="text" placeholder="Add a handoff note" autocomplete="off" />
+            <button class="text-btn" id="save-note" type="submit">Add</button>
+          </span>
+          <span class="note-status" id="note-status" role="status"></span>
+        </form>
+
+        <section class="verdict" id="incoming">
+          <p class="section-label">Shift close</p>
+          <div class="verdict-row">
+            <svg id="verdict-icon" class="verdict-icon" viewBox="0 0 12 12" aria-hidden="true"></svg>
+            <span id="answer">Checking shift…</span>
+            <button id="close-shift" class="check-btn" type="button">Can I close this shift?</button>
+          </div>
+          <p id="error" class="error" role="alert"></p>
+          <div id="result" hidden>
+            <button id="evidence-toggle" class="text-link" type="button" aria-expanded="false" aria-controls="memories"></button>
+            <ul id="memories" class="evidence-list" hidden></ul>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const noteInput = document.querySelector("#note");
+    const compose = document.querySelector("#compose");
+    const saveButton = document.querySelector("#save-note");
+    const closeButton = document.querySelector("#close-shift");
+    const resetButton = document.querySelector("#reset-demo");
+    const noteStatus = document.querySelector("#note-status");
+    const errorLine = document.querySelector("#error");
+    const result = document.querySelector("#result");
+    const answer = document.querySelector("#answer");
+    const memories = document.querySelector("#memories");
+    const evidenceToggle = document.querySelector("#evidence-toggle");
+    const banner = document.querySelector("#shift-banner");
+    const bannerText = document.querySelector("#banner-text");
+    const stayIcon = banner.querySelector(".stay-icon");
+    const safeIcon = banner.querySelector(".safe-icon");
+    const viewEvidence = document.querySelector("#view-evidence");
+    const log = document.querySelector("#log");
+    const updated = document.querySelector("#updated");
+    const composeTime = document.querySelector("#compose-time");
+    const verdictIcon = document.querySelector("#verdict-icon");
+
+    const STAY_ICON = '<path d="M6 1.2 11 10.6H1L6 1.2z" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M6 4.6v2.8" stroke="currentColor" stroke-width="1.1"/><circle cx="6" cy="8.9" r="0.55" fill="currentColor"/>';
+    const SAFE_ICON = '<path d="M2.2 6.2 4.7 8.7 9.8 3.4" fill="none" stroke="currentColor" stroke-width="1.2"/>';
+
+    const baseEntries = [
+      {
+        id: "billing-webhook-tuesday-reopen",
+        at: new Date("2026-09-22T02:10:00"),
+        actor: "Scheduled job",
+        message: "Ticket closed, then reopened when the nightly cron ran.",
+      },
+      {
+        id: "billing-webhook-wednesday-disabled",
+        at: new Date("2026-09-23T00:00:00"),
+        display: "09-23",
+        actor: "Automated check",
+        message: "Ticket closed while the webhook was still disabled.",
+      },
+    ];
+    const sessionEntries = [];
+    let checkInFlight = null;
+
+    function stamp(date) {
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hour = String(date.getHours()).padStart(2, "0");
+      const minute = String(date.getMinutes()).padStart(2, "0");
+      return month + "-" + day + " " + hour + ":" + minute;
+    }
+
+    function relative(date) {
+      const minutes = Math.round((Date.now() - date.getTime()) / 60000);
+      if (Math.abs(minutes) < 1) return "just now";
+      if (minutes < 0) return stamp(date);
+      if (minutes < 60) return minutes + "m ago";
+      const hours = Math.floor(minutes / 60);
+      if (hours < 48) return hours + "h ago";
+      return Math.floor(hours / 24) + "d ago";
+    }
+
+    function allEntries() {
+      return baseEntries.concat(sessionEntries).sort((a, b) => a.at - b.at);
+    }
+
+    function renderLog() {
+      const entries = allEntries();
+      log.replaceChildren();
+      entries.forEach((entry) => {
+        const row = document.createElement("div");
+        row.className = "log-row";
+        const time = document.createElement("span");
+        time.className = "log-time";
+        time.textContent = entry.display || stamp(entry.at);
+        const actor = document.createElement("span");
+        actor.className = "log-actor";
+        actor.textContent = entry.actor;
+        const message = document.createElement("span");
+        message.className = "log-message";
+        message.textContent = entry.message;
+        row.append(time, actor, message);
+        log.append(row);
+      });
+      const latest = entries[entries.length - 1];
+      updated.textContent = latest ? "updated " + relative(latest.at) : "";
+    }
+
+    function tickComposeClock() {
+      composeTime.textContent = stamp(new Date());
+    }
+
+    async function postJson(url, body) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body ?? {}),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "Request failed (" + response.status + ")");
+      }
+      return data;
+    }
+
+    function evidenceLabel(count) {
+      const noun = count === 1 ? "prior incident" : "prior incidents";
+      return "Evidence: " + count + " " + noun;
+    }
+
+    function isStay(answerText) {
+      return /^no,\s*stay\b/i.test(answerText || "");
+    }
+
+    function memoryTime(text) {
+      const match = String(text || "").match(/When:\s*(\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2})?)?)/);
+      if (!match) {
+        const loose = String(text || "").match(/\d{4}-\d{2}-\d{2}/);
+        return loose ? loose[0].slice(5) : "—";
+      }
+      const value = match[1];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value.slice(5);
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return value;
+      return stamp(parsed);
+    }
+
+    function cleanMemoryText(text) {
+      return String(text || "")
+        .split("\n")
+        .map((line) => line.replace(/\s*\|\s*When:.*$/, "").replace(/\s*\|\s*Involving:.*$/, "").trim())
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    function showBanner(stay) {
+      banner.hidden = false;
+      banner.className = "alert " + (stay ? "stay" : "safe");
+      stayIcon.hidden = !stay;
+      safeIcon.hidden = stay;
+      bannerText.textContent = stay
+        ? "billing-webhook may not actually be resolved."
+        : "No issues found for incoming shift";
+    }
+
+    const MONTHS = ["Jan", "Feb", "March", "April", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
+
+    function memoryDate(text) {
+      const source = String(text || "");
+      const tagged = source.match(/When:\s*(\d{4}-\d{2}-\d{2})/);
+      const loose = tagged || source.match(/(\d{4}-\d{2}-\d{2})/);
+      if (!loose) return null;
+      const parts = loose[1].split("-").map(Number);
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function monthDay(date) {
+      return MONTHS[date.getMonth()] + " " + date.getDate();
+    }
+
+    function isHandoff(memory) {
+      return memory?.context === "live shift handoff note";
+    }
+
+    function evidencePrefix(memory) {
+      if (isHandoff(memory)) {
+        const date = memoryDate(memory.text);
+        const today = new Date();
+        const sameDay = date
+          && date.getFullYear() === today.getFullYear()
+          && date.getMonth() === today.getMonth()
+          && date.getDate() === today.getDate();
+        if (!date || sameDay) return "Tonight's handoff note:";
+        return "Handoff note (" + monthDay(date) + "):";
+      }
+      const date = memoryDate(memory.text);
+      if (!date) return "Past incident:";
+      return "Past incident (" + monthDay(date) + "):";
+    }
+
+    function whySentence(stay, cited, count) {
+      const notes = cited.filter(isHandoff).length;
+      const past = Math.max(0, count - notes);
+      if (stay && notes > 0 && past > 0) {
+        return "This ticket has been falsely closed before, and today's note shows the same pattern.";
+      }
+      if (stay && notes > 0) {
+        return "Today's handoff note says the problem is still open, even though the ticket says resolved.";
+      }
+      if (stay && past >= 2) {
+        return "This ticket has been falsely closed " + past + " times before, while the status still said resolved.";
+      }
+      if (stay && past === 1) {
+        return "Memory has one earlier time this ticket was closed while the real problem was still open.";
+      }
+      if (stay) {
+        return "Memory shows this close does not match what actually happened.";
+      }
+      if (count === 0) {
+        return "Nothing in memory shows this ticket being closed while the real problem was still open.";
+      }
+      if (count === 1) {
+        return "There is only one earlier incident, which is not enough of a pattern to keep the shift open.";
+      }
+      return "There isn't a repeated pattern of this ticket being closed while the cause was still open.";
+    }
+
+    function explanationFromAnswer(answerText, stay, cited, count) {
+      const text = String(answerText || "");
+      if (/latest note indicates this was actually fixed/i.test(text)) {
+        return "The latest note indicates this was actually fixed.";
+      }
+      if (/pattern continues/i.test(text)) {
+        return "The pattern continues.";
+      }
+      return whySentence(stay, cited, count);
+    }
+
+    function setVerdict(stay, why) {
+      answer.replaceChildren();
+      const headline = document.createElement("span");
+      headline.textContent = stay ? "No, stay" : "Yes, safe to close";
+      const detail = document.createElement("span");
+      detail.textContent = why;
+      detail.style.display = "block";
+      answer.append(headline, detail);
+      verdictIcon.className = "verdict-icon" + (stay ? " stay" : "");
+      verdictIcon.innerHTML = stay ? STAY_ICON : SAFE_ICON;
+    }
+
+    function expandEvidence() {
+      memories.hidden = false;
+      evidenceToggle.setAttribute("aria-expanded", "true");
+      requestAnimationFrame(() => {
+        const rect = memories.getBoundingClientRect();
+        const fullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight - 8;
+        if (!fullyVisible) {
+          memories.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    }
+
+    function renderDecision(data) {
+      const stay = isStay(data.answer);
+      const cited = Array.isArray(data.citedMemories) ? data.citedMemories : [];
+      const count = Number(data.evidenceCount) || 0;
+      setVerdict(stay, explanationFromAnswer(data.answer, stay, cited, count));
+      evidenceToggle.textContent = evidenceLabel(count);
+      memories.replaceChildren();
+      memories.hidden = true;
+      evidenceToggle.setAttribute("aria-expanded", "false");
+      if (cited.length === 0) {
+        const item = document.createElement("li");
+        item.className = "evidence-row";
+        item.textContent = "No memories were cited.";
+        memories.append(item);
+      } else {
+        cited.forEach((memory) => {
+          const item = document.createElement("li");
+          item.className = "evidence-row";
+          const time = document.createElement("span");
+          time.className = "evidence-time";
+          time.textContent = memoryTime(memory.text);
+          const body = document.createElement("span");
+          body.className = "evidence-text";
+          body.textContent = evidencePrefix(memory) + " " + cleanMemoryText(memory.text);
+          item.append(time, body);
+          memories.append(item);
+          if (memory.context === "live shift handoff note" && memory.id && !sessionEntries.some((entry) => entry.id === memory.id)) {
+            const when = String(memory.text || "").match(/When:\s*(\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2})?)?)/);
+            const at = when ? new Date(when[1]) : new Date();
+            sessionEntries.push({
+              id: memory.id,
+              at: Number.isNaN(at.getTime()) ? new Date() : at,
+              actor: "Handoff note",
+              message: cleanMemoryText(memory.text).replace(/\n/g, " "),
+            });
+          }
+        });
+      }
+      renderLog();
+      result.hidden = false;
+      showBanner(stay);
+    }
+
+    function runCloseCheck() {
+      if (checkInFlight) return checkInFlight;
+      errorLine.textContent = "";
+      closeButton.disabled = true;
+      closeButton.textContent = "Checking…";
+      checkInFlight = postJson("/can-i-close", { ticket: "billing-webhook" })
+        .then((data) => {
+          renderDecision(data);
+        })
+        .catch((err) => {
+          errorLine.textContent = err.message;
+        })
+        .finally(() => {
+          checkInFlight = null;
+          closeButton.disabled = false;
+          closeButton.textContent = "Can I close this shift?";
+        });
+      return checkInFlight;
+    }
+
+    viewEvidence.addEventListener("click", () => {
+      expandEvidence();
+    });
+
+    evidenceToggle.addEventListener("click", () => {
+      const open = memories.hidden;
+      memories.hidden = !open;
+      evidenceToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    compose.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorLine.textContent = "";
+      const note = noteInput.value.trim();
+      if (!note) {
+        noteStatus.textContent = "Write a note before adding.";
+        return;
+      }
+      saveButton.disabled = true;
+      noteStatus.textContent = "Retaining…";
+      try {
+        const saved = await postJson("/handoff-note", { note });
+        noteInput.value = "";
+        noteStatus.textContent = "";
+        sessionEntries.push({
+          id: saved.documentId || "handoff-" + Date.now(),
+          at: new Date(),
+          actor: "Handoff note",
+          message: note,
+        });
+        renderLog();
+      } catch (err) {
+        noteStatus.textContent = "";
+        errorLine.textContent = err.message;
+      } finally {
+        saveButton.disabled = false;
+      }
+    });
+
+    closeButton.addEventListener("click", () => {
+      runCloseCheck();
+    });
+
+    resetButton.addEventListener("click", async () => {
+      resetButton.disabled = true;
+      const previous = resetButton.textContent;
+      resetButton.textContent = "Resetting…";
+      errorLine.textContent = "";
+      try {
+        if (checkInFlight) await checkInFlight;
+        await postJson("/reset-demo", {});
+        sessionEntries.splice(0, sessionEntries.length);
+        renderLog();
+        await runCloseCheck();
+      } catch (err) {
+        errorLine.textContent = err.message;
+      } finally {
+        resetButton.disabled = false;
+        resetButton.textContent = previous;
+      }
+    });
+
+    renderLog();
+    tickComposeClock();
+    setInterval(tickComposeClock, 30000);
+    runCloseCheck();
+  </script>
+</body>
+</html>

@@ -1,20 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Still Open</title>
   <style>
-    :root {
+    :root,
+    [data-theme="dark"] {
       color-scheme: dark;
-      --bg: #1c1e1b;
-      --bg-side: #171916;
-      --line: #2c302c;
-      --line-strong: #3a403a;
-      --text: #d6d3cb;
-      --muted: #8d9288;
-      --faint: #5e645c;
-      --accent: #c4922a;
+      --bg-primary: #100f0d;
+      --bg-card: #1b1916;
+      --bg-sidebar: #141311;
+      --text-primary: #f6f1e7;
+      --text-muted: #a89f91;
+      --border-color: #3d3830;
+      --accent: #f0a020;
+      --accent-ink: #1a1204;
+      --accent-soft: #3a2c12;
+      --radius: 12px;
+      --sans: "Segoe UI", "Helvetica Neue", sans-serif;
+      --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+    }
+
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg-primary: #f6f3ec;
+      --bg-card: #fffcf7;
+      --bg-sidebar: #efeae1;
+      --text-primary: #1c1814;
+      --text-muted: #6d6458;
+      --border-color: #ddd4c6;
+      --accent: #9a5600;
+      --accent-ink: #fffaf3;
+      --accent-soft: #f3e2c4;
+      --radius: 12px;
       --sans: "Segoe UI", "Helvetica Neue", sans-serif;
       --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
     }
@@ -24,15 +43,14 @@
     html, body {
       margin: 0;
       min-height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font: 13px/1.45 var(--sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font: 14px/1.45 var(--sans);
     }
 
     button, input {
       font: inherit;
       color: inherit;
-      border-radius: 0;
     }
 
     button { cursor: pointer; }
@@ -44,52 +62,63 @@
     }
 
     .sidebar {
-      width: 240px;
+      width: 200px;
       flex: none;
       position: sticky;
       top: 0;
       height: 100vh;
-      background: var(--bg-side);
-      border-right: 1px solid var(--line);
-      padding: 14px 0;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      padding: 16px 0;
     }
 
     .side-label {
-      margin: 0 14px 8px;
-      color: var(--faint);
-      font: 11px/1 var(--mono);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      margin: 0 14px 10px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
     }
 
     .ticket {
-      display: grid;
-      grid-template-columns: 1fr auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: 8px;
       width: 100%;
       margin: 0;
-      padding: 7px 14px 7px 12px;
+      padding: 9px 12px 9px 10px;
       border: 0;
-      border-left: 2px solid transparent;
+      border-left: 3px solid transparent;
       background: transparent;
       text-align: left;
     }
 
     .ticket.active {
       border-left-color: var(--accent);
-      color: var(--text);
+      color: var(--text-primary);
     }
 
     .ticket.placeholder {
-      color: var(--faint);
-      cursor: default;
+      color: var(--text-muted);
+      opacity: 0.55;
+      cursor: not-allowed;
     }
 
-    .ticket-name { font-family: var(--mono); font-size: 12px; }
+    .ticket-name {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 650;
+    }
 
-    .ticket-status {
-      color: var(--faint);
-      font-size: 11px;
+    .status-pill {
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      padding: 1px 6px;
+      color: var(--text-muted);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: lowercase;
     }
 
     .workspace {
@@ -104,262 +133,376 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      height: 36px;
-      padding: 0 16px;
-      border-bottom: 1px solid var(--line);
+      min-height: 48px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .crumbs {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       margin: 0;
-      color: var(--muted);
-      font-size: 12px;
+      color: var(--text-muted);
+      font-size: 13px;
     }
-
-    .crumbs .sep { color: var(--faint); }
 
     .crumbs .here {
-      color: var(--text);
+      color: var(--text-primary);
       font-family: var(--mono);
+      font-weight: 700;
     }
 
-    .text-link, .text-btn {
-      background: transparent;
-      border: 0;
-      padding: 0;
-      color: var(--muted);
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .theme-toggle svg {
+      width: 14px;
+      height: 14px;
+      color: var(--accent);
     }
 
     .text-link {
-      font-size: 12px;
+      background: transparent;
+      border: 0;
+      padding: 0;
+      color: var(--text-muted);
+      font-size: 13px;
       text-decoration: underline;
-      text-underline-offset: 2px;
+      text-underline-offset: 3px;
     }
 
-    .text-link:hover, .text-btn:hover { color: var(--accent); }
+    .text-link:hover { color: var(--accent); }
+    .text-link:disabled { color: var(--text-muted); cursor: progress; }
 
-    .text-link:disabled, .text-btn:disabled {
-      color: var(--faint);
-      cursor: progress;
+    .panel {
+      padding: 28px 32px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
     }
 
     .alert {
       display: flex;
       align-items: center;
-      gap: 8px;
-      min-height: 28px;
-      padding: 3px 16px;
-      background: #211e18;
-      border-bottom: 1px solid #3a3428;
-      box-shadow: inset 2px 0 0 var(--accent);
-      color: #e4d5b4;
-      font-size: 12px;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 22px 24px;
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      background: var(--accent);
+      color: var(--accent-ink);
     }
 
     .alert.safe {
-      background: var(--bg);
-      border-bottom-color: var(--line);
-      box-shadow: inset 2px 0 0 var(--line-strong);
-      color: var(--muted);
+      background: var(--bg-card);
+      color: var(--text-primary);
     }
 
-    .alert .icon {
-      width: 12px;
-      height: 12px;
+    .alert-title {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .alert-copy {
+      margin: 6px 0 0;
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .alert .review {
       flex: none;
-      color: var(--accent);
+      border: 2px solid var(--accent-ink);
+      border-radius: 999px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 10px 16px;
+      font-weight: 800;
     }
 
-    .alert.safe .icon { color: var(--muted); }
-
-    .alert .text-link { margin-left: auto; color: #e4d5b4; }
-    .alert.safe .text-link { color: var(--muted); }
-
-    .panel { padding: 14px 16px 24px; }
+    .alert.safe .review {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--bg-card);
+    }
 
     .ticket-head {
       display: flex;
-      align-items: baseline;
-      gap: 12px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
     }
 
     h1 {
       margin: 0;
-      font: 15px/1.2 var(--mono);
-      font-weight: 500;
+      flex: none;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      background: #8d9288;
+    .outline-badge {
+      border: 2px solid var(--accent);
+      border-radius: 999px;
+      padding: 3px 10px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
     }
 
     .updated {
       margin-left: auto;
-      color: var(--faint);
+      color: var(--text-muted);
       font-family: var(--mono);
       font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .feed {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .section-label {
-      margin: 14px 0 6px;
-      color: var(--faint);
-      font: 11px/1 var(--mono);
-      letter-spacing: 0.08em;
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+    }
+
+    .activity-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 16px 18px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+    }
+
+    .activity-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .activity-time {
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .activity-source {
+      margin: 0;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
     }
 
-    .log-row, .compose {
-      display: grid;
-      grid-template-columns: 96px 88px 1fr;
-      gap: 12px;
-      align-items: baseline;
-      padding: 6px 0 6px 10px;
-      border-left: 1px solid var(--line-strong);
-      border-bottom: 1px solid var(--line);
+    .activity-body {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 15px;
+      line-height: 1.5;
     }
 
-    .log-time, .log-actor, .compose-time, .compose-actor {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .log-message { color: var(--text); }
-
-    .compose-main {
+    .compose {
       display: flex;
-      align-items: center;
-      gap: 8px;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+      padding: 16px 18px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      background: var(--bg-card);
     }
 
-    .compose-main input { flex: 1; }
+    .compose-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
 
     .compose input {
-      width: 100%;
-      padding: 2px 0;
-      border: 0;
-      border-bottom: 1px solid transparent;
-      background: transparent;
-      outline: none;
+      flex: 1;
+      min-width: 0;
+      padding: 12px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      background: var(--bg-primary);
+      color: var(--text-primary);
     }
 
-    .compose input:focus { border-bottom-color: var(--line-strong); }
-
-    .compose .text-btn {
-      flex: none;
-      border: 1px solid var(--line-strong);
-      padding: 2px 8px;
-      font-size: 12px;
+    .compose input:focus {
+      outline: 2px solid var(--accent);
+      border-color: var(--accent);
     }
 
     .note-status {
-      grid-column: 3;
-      color: var(--faint);
+      min-height: 1.2em;
+      margin: 0;
+      color: var(--text-muted);
       font-size: 12px;
     }
 
-    .verdict {
-      margin-top: 16px;
-      padding-top: 10px;
-      border-top: 1px solid var(--line);
+    .primary, .secondary {
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-weight: 800;
+      white-space: nowrap;
     }
 
-    .verdict-row {
-      display: flex;
+    .primary {
+      border: 2px solid var(--accent);
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .secondary {
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-primary);
+    }
+
+    .primary:disabled, .secondary:disabled {
+      color: var(--text-muted);
+      cursor: progress;
+    }
+
+    .close-box {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 28px;
       align-items: center;
+      padding: 22px 24px;
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      background: var(--bg-card);
+    }
+
+    .close-box.stay { border-color: var(--accent); }
+
+    .close-heading {
+      margin: 0 0 8px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      line-height: 1.25;
+    }
+
+    #answer {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 650;
+    }
+
+    .recurrence-pill {
+      display: inline-block;
+      margin-top: 12px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    #evidence-toggle {
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    .close-actions {
+      display: flex;
+      flex-direction: column;
       gap: 8px;
     }
 
-    .verdict-icon {
-      width: 12px;
-      height: 12px;
-      flex: none;
-      color: var(--muted);
-    }
-
-    .verdict-icon.stay { color: var(--accent); }
-
-    #answer { font-size: 13px; }
-
-    .check-btn {
-      margin-left: auto;
-      background: transparent;
-      border: 1px solid var(--line-strong);
-      padding: 3px 8px;
-      color: var(--text);
-      font-size: 12px;
-    }
-
-    .check-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .check-btn:disabled { color: var(--faint); cursor: progress; }
-
     .error {
       min-height: 1.2em;
-      margin: 6px 0 0;
+      margin: 8px 0 0;
       color: var(--accent);
       font-size: 12px;
     }
 
-    #evidence-toggle { display: inline-block; margin-top: 8px; }
-
     .evidence-list {
-      margin: 6px 0 0;
+      margin: 12px 0 0;
       padding: 0;
       list-style: none;
     }
 
     .evidence-row {
       display: grid;
-      grid-template-columns: 96px 1fr;
+      grid-template-columns: 108px 1fr;
       gap: 12px;
-      padding: 6px 0 6px 10px;
-      border-left: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
+      padding: 10px 0;
+      border-top: 1px solid var(--border-color);
     }
 
     .evidence-time {
+      color: var(--text-muted);
       font-family: var(--mono);
       font-size: 12px;
-      color: var(--muted);
     }
 
-    .evidence-text { color: var(--text); white-space: pre-line; }
+    .evidence-text {
+      color: var(--text-primary);
+      white-space: pre-line;
+    }
 
     [hidden] { display: none !important; }
+
+    @media (max-width: 800px) {
+      .close-box { grid-template-columns: 1fr; }
+      .compose-row { flex-direction: column; align-items: stretch; }
+      .sidebar { width: 180px; }
+      .panel { padding: 20px 16px 36px; }
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
-      <p class="side-label">Tickets</p>
+      <p class="side-label">TICKETS</p>
       <button class="ticket active" type="button" aria-current="true">
         <span class="ticket-name">billing-webhook</span>
-        <span class="ticket-status">resolved</span>
+        <span class="status-pill">resolved</span>
       </button>
       <div class="ticket placeholder" aria-disabled="true">
         <span class="ticket-name">invoice-replay</span>
-        <span class="ticket-status">investigating</span>
+        <span class="status-pill">investigating</span>
       </div>
       <div class="ticket placeholder" aria-disabled="true">
         <span class="ticket-name">tax-export</span>
-        <span class="ticket-status">monitoring</span>
+        <span class="status-pill">monitoring</span>
       </div>
       <div class="ticket placeholder" aria-disabled="true">
         <span class="ticket-name">payout-lag</span>
-        <span class="ticket-status">monitoring</span>
+        <span class="status-pill">monitoring</span>
       </div>
     </aside>
 
@@ -367,57 +510,68 @@
       <header class="topbar">
         <p class="crumbs">
           <span>On-Call</span>
-          <span class="sep">/</span>
+          <span>/</span>
           <span>Shift Handoff</span>
-          <span class="sep">/</span>
+          <span>/</span>
           <span class="here">billing-webhook</span>
         </p>
-        <button id="reset-demo" class="text-link" type="button">Reset demo</button>
+        <div class="top-actions">
+          <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="true">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path id="theme-icon" fill="currentColor" d="M8 2.2a.8.8 0 0 1 .8.8v.9a.8.8 0 1 1-1.6 0v-.9A.8.8 0 0 1 8 2.2Zm0 8.2A2.4 2.4 0 1 0 8 5.6a2.4 2.4 0 0 0 0 4.8ZM3.6 8a.8.8 0 0 1-.8.8h-.9a.8.8 0 1 1 0-1.6h.9a.8.8 0 0 1 .8.8Zm10.5.8h-.9a.8.8 0 1 1 0-1.6h.9a.8.8 0 1 1 0 1.6ZM4.7 4.7a.8.8 0 0 1 0 1.1l-.6.6a.8.8 0 1 1-1.2-1.1l.6-.6a.8.8 0 0 1 1.2 0Zm8.4 6.1-.6-.6a.8.8 0 1 1 1.1-1.1l.6.6a.8.8 0 0 1-1.1 1.1ZM4.7 11.3a.8.8 0 0 1-1.1 0l-.6-.6a.8.8 0 1 1 1.1-1.1l.6.6a.8.8 0 0 1 0 1.1Zm7.2-6.6.6-.6a.8.8 0 1 1 1.1 1.1l-.6.6a.8.8 0 1 1-1.1-1.1ZM8 11.3a.8.8 0 0 1 .8.8v.9a.8.8 0 1 1-1.6 0v-.9a.8.8 0 0 1 .8-.8Z" />
+            </svg>
+            <span id="theme-label">Dark</span>
+          </button>
+          <button id="reset-demo" class="text-link" type="button">Reset demo</button>
+        </div>
       </header>
 
-      <div id="shift-banner" class="alert stay" hidden>
-        <svg class="icon stay-icon" viewBox="0 0 12 12" aria-hidden="true">
-          <path d="M6 1.2 11 10.6H1L6 1.2z" fill="none" stroke="currentColor" stroke-width="1.1" />
-          <path d="M6 4.6v2.8" stroke="currentColor" stroke-width="1.1" />
-          <circle cx="6" cy="8.9" r="0.55" fill="currentColor" />
-        </svg>
-        <svg class="icon safe-icon" viewBox="0 0 12 12" aria-hidden="true" hidden>
-          <path d="M2.2 6.2 4.7 8.7 9.8 3.4" fill="none" stroke="currentColor" stroke-width="1.2" />
-        </svg>
-        <span id="banner-text"></span>
-        <button id="view-evidence" class="text-link" type="button">Show why</button>
-      </div>
-
       <main class="panel">
+        <section id="shift-banner" class="alert stay" hidden>
+          <div>
+            <p id="banner-title" class="alert-title"></p>
+            <p id="banner-text" class="alert-copy"></p>
+          </div>
+          <button id="view-evidence" class="review" type="button">Review Evidence</button>
+        </section>
+
         <div class="ticket-head">
           <h1>billing-webhook</h1>
-          <span class="badge"><span class="dot" aria-hidden="true"></span> resolved</span>
+          <span id="status-badge" class="outline-badge" hidden>DISPUTED RESOLUTION</span>
           <span class="updated" id="updated"></span>
         </div>
 
-        <p class="section-label">Activity</p>
-        <div id="log"></div>
-        <form class="compose" id="compose">
-          <span class="compose-time" id="compose-time"></span>
-          <span class="compose-actor">Handoff note</span>
-          <span class="compose-main">
-            <input id="note" type="text" placeholder="Add a handoff note" autocomplete="off" />
-            <button class="text-btn" id="save-note" type="submit">Add</button>
-          </span>
-          <span class="note-status" id="note-status" role="status"></span>
-        </form>
+        <section class="feed">
+          <p class="section-label">ACTIVITY</p>
+          <div id="log"></div>
+          <form class="compose" id="compose">
+            <p class="section-label">HANDOFF</p>
+            <div class="compose-row">
+              <input id="note" type="text" placeholder="Add a handoff note" autocomplete="off" />
+              <button class="primary" id="save-note" type="submit">Add Note</button>
+            </div>
+            <p id="note-status" class="note-status" role="status"></p>
+          </form>
+        </section>
 
-        <section class="verdict" id="incoming">
-          <p class="section-label">Shift close</p>
-          <div class="verdict-row">
-            <svg id="verdict-icon" class="verdict-icon" viewBox="0 0 12 12" aria-hidden="true"></svg>
-            <span id="answer">Checking shift…</span>
-            <button id="close-shift" class="check-btn" type="button">Can I close this shift?</button>
-          </div>
-          <p id="error" class="error" role="alert"></p>
-          <div id="result" hidden>
-            <button id="evidence-toggle" class="text-link" type="button" aria-expanded="false" aria-controls="memories"></button>
-            <ul id="memories" class="evidence-list" hidden></ul>
+        <section id="incoming">
+          <div id="close-box" class="close-box">
+            <div class="close-copy">
+              <h2 id="close-heading" class="close-heading">SHIFT CLOSE</h2>
+              <p id="answer">Checking shift…</p>
+              <div id="result" hidden>
+                <span id="recurrence-pill" class="recurrence-pill"></span>
+                <div>
+                  <button id="evidence-toggle" class="text-link" type="button" aria-expanded="false" aria-controls="memories"></button>
+                </div>
+                <ul id="memories" class="evidence-list" hidden></ul>
+              </div>
+              <p id="error" class="error" role="alert"></p>
+            </div>
+            <div class="close-actions">
+              <button id="close-shift" class="secondary" type="button">Can I close this shift?</button>
+              <button id="deep-dive" class="primary" type="button">Deep Dive Evidence</button>
+            </div>
           </div>
         </section>
       </main>
@@ -425,47 +579,40 @@
   </div>
 
   <script>
+    const root = document.documentElement;
     const noteInput = document.querySelector("#note");
     const compose = document.querySelector("#compose");
     const saveButton = document.querySelector("#save-note");
     const closeButton = document.querySelector("#close-shift");
+    const deepDive = document.querySelector("#deep-dive");
     const resetButton = document.querySelector("#reset-demo");
+    const themeToggle = document.querySelector("#theme-toggle");
+    const themeLabel = document.querySelector("#theme-label");
+    const themeIcon = document.querySelector("#theme-icon");
     const noteStatus = document.querySelector("#note-status");
     const errorLine = document.querySelector("#error");
     const result = document.querySelector("#result");
     const answer = document.querySelector("#answer");
     const memories = document.querySelector("#memories");
     const evidenceToggle = document.querySelector("#evidence-toggle");
+    const recurrencePill = document.querySelector("#recurrence-pill");
+    const closeHeading = document.querySelector("#close-heading");
+    const closeBox = document.querySelector("#close-box");
+    const statusBadge = document.querySelector("#status-badge");
     const banner = document.querySelector("#shift-banner");
+    const bannerTitle = document.querySelector("#banner-title");
     const bannerText = document.querySelector("#banner-text");
-    const stayIcon = banner.querySelector(".stay-icon");
-    const safeIcon = banner.querySelector(".safe-icon");
     const viewEvidence = document.querySelector("#view-evidence");
     const log = document.querySelector("#log");
     const updated = document.querySelector("#updated");
-    const composeTime = document.querySelector("#compose-time");
-    const verdictIcon = document.querySelector("#verdict-icon");
 
-    const STAY_ICON = '<path d="M6 1.2 11 10.6H1L6 1.2z" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M6 4.6v2.8" stroke="currentColor" stroke-width="1.1"/><circle cx="6" cy="8.9" r="0.55" fill="currentColor"/>';
-    const SAFE_ICON = '<path d="M2.2 6.2 4.7 8.7 9.8 3.4" fill="none" stroke="currentColor" stroke-width="1.2"/>';
+    const MOON_ICON = "M8 1.6a6.4 6.4 0 1 0 6.2 8.1 5 5 0 0 1-6.2-8.1Z";
+    const SUN_ICON = "M8 2.2a.8.8 0 0 1 .8.8v.9a.8.8 0 1 1-1.6 0v-.9A.8.8 0 0 1 8 2.2Zm0 8.2A2.4 2.4 0 1 0 8 5.6a2.4 2.4 0 0 0 0 4.8ZM3.6 8a.8.8 0 0 1-.8.8h-.9a.8.8 0 1 1 0-1.6h.9a.8.8 0 0 1 .8.8Zm10.5.8h-.9a.8.8 0 1 1 0-1.6h.9a.8.8 0 1 1 0 1.6ZM4.7 4.7a.8.8 0 0 1 0 1.1l-.6.6a.8.8 0 1 1-1.2-1.1l.6-.6a.8.8 0 0 1 1.2 0Zm8.4 6.1-.6-.6a.8.8 0 1 1 1.1-1.1l.6.6a.8.8 0 0 1-1.1 1.1ZM4.7 11.3a.8.8 0 0 1-1.1 0l-.6-.6a.8.8 0 1 1 1.1-1.1l.6.6a.8.8 0 0 1 0 1.1Zm7.2-6.6.6-.6a.8.8 0 1 1 1.1 1.1l-.6.6a.8.8 0 1 1-1.1-1.1ZM8 11.3a.8.8 0 0 1 .8.8v.9a.8.8 0 1 1-1.6 0v-.9a.8.8 0 0 1 .8-.8Z";
 
-    const baseEntries = [
-      {
-        id: "billing-webhook-tuesday-reopen",
-        at: new Date("2026-09-22T02:10:00"),
-        actor: "Scheduled job",
-        message: "Ticket closed, then reopened when the nightly cron ran.",
-      },
-      {
-        id: "billing-webhook-wednesday-disabled",
-        at: new Date("2026-09-23T00:00:00"),
-        display: "09-23",
-        actor: "Automated check",
-        message: "Ticket closed while the webhook was still disabled.",
-      },
-    ];
+    let citedEntries = [];
     const sessionEntries = [];
     let checkInFlight = null;
+    let lastNoteId = "";
 
     function stamp(date) {
       const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -485,34 +632,34 @@
       return Math.floor(hours / 24) + "d ago";
     }
 
-    function allEntries() {
-      return baseEntries.concat(sessionEntries).sort((a, b) => a.at - b.at);
-    }
-
     function renderLog() {
-      const entries = allEntries();
+      const byId = new Map();
+      citedEntries.forEach((entry) => byId.set(entry.id, entry));
+      sessionEntries.forEach((entry) => {
+        if (!byId.has(entry.id)) byId.set(entry.id, entry);
+      });
+      const entries = [...byId.values()].sort((a, b) => a.at - b.at);
       log.replaceChildren();
       entries.forEach((entry) => {
-        const row = document.createElement("div");
-        row.className = "log-row";
-        const time = document.createElement("span");
-        time.className = "log-time";
+        const card = document.createElement("article");
+        card.className = "activity-card";
+        const time = document.createElement("time");
+        time.className = "activity-time";
         time.textContent = entry.display || stamp(entry.at);
-        const actor = document.createElement("span");
-        actor.className = "log-actor";
-        actor.textContent = entry.actor;
-        const message = document.createElement("span");
-        message.className = "log-message";
+        const meta = document.createElement("div");
+        meta.className = "activity-meta";
+        const source = document.createElement("p");
+        source.className = "activity-source";
+        source.textContent = entry.source;
+        const message = document.createElement("p");
+        message.className = "activity-body";
         message.textContent = entry.message;
-        row.append(time, actor, message);
-        log.append(row);
+        meta.append(time, source);
+        card.append(meta, message);
+        log.append(card);
       });
       const latest = entries[entries.length - 1];
       updated.textContent = latest ? "updated " + relative(latest.at) : "";
-    }
-
-    function tickComposeClock() {
-      composeTime.textContent = stamp(new Date());
     }
 
     async function postJson(url, body) {
@@ -529,8 +676,13 @@
     }
 
     function evidenceLabel(count) {
-      const noun = count === 1 ? "prior incident" : "prior incidents";
+      const noun = count === 1 ? "memory" : "memories";
       return "Evidence: " + count + " " + noun;
+    }
+
+    function recurrenceLabel(count) {
+      const noun = count === 1 ? "Prior Recurrence" : "Prior Recurrences";
+      return count + " " + noun + " Detected";
     }
 
     function isStay(answerText) {
@@ -558,16 +710,6 @@
         .join("\n");
     }
 
-    function showBanner(stay) {
-      banner.hidden = false;
-      banner.className = "alert " + (stay ? "stay" : "safe");
-      stayIcon.hidden = !stay;
-      safeIcon.hidden = stay;
-      bannerText.textContent = stay
-        ? "billing-webhook may not actually be resolved."
-        : "No issues found for incoming shift";
-    }
-
     const MONTHS = ["Jan", "Feb", "March", "April", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
 
     function memoryDate(text) {
@@ -585,6 +727,13 @@
 
     function isHandoff(memory) {
       return memory?.context === "live shift handoff note";
+    }
+
+    function sourceLabel(memory) {
+      const blob = ((memory.context || "") + " " + (memory.text || "")).toLowerCase();
+      if (isHandoff(memory)) return "Handoff note";
+      if (/cron|nightly/.test(blob)) return "Cron job";
+      return "Automated check";
     }
 
     function evidencePrefix(memory) {
@@ -638,27 +787,41 @@
       if (/pattern continues/i.test(text)) {
         return "The pattern continues.";
       }
-      return whySentence(stay, cited, count);
+      const rest = text.replace(/^(?:no,\s*stay|yes,\s*safe to close)\b[.!]?\s*/i, "").trim();
+      return rest || whySentence(stay, cited, count);
     }
 
-    function setVerdict(stay, why) {
-      answer.replaceChildren();
-      const headline = document.createElement("span");
-      headline.textContent = stay ? "No, stay" : "Yes, safe to close";
-      const detail = document.createElement("span");
-      detail.textContent = why;
-      detail.style.display = "block";
-      answer.append(headline, detail);
-      verdictIcon.className = "verdict-icon" + (stay ? " stay" : "");
-      verdictIcon.innerHTML = stay ? STAY_ICON : SAFE_ICON;
+    function showBanner(stay, description) {
+      banner.hidden = false;
+      banner.className = "alert " + (stay ? "stay" : "safe");
+      bannerTitle.textContent = stay ? "RISK: FALSE RESOLUTION" : "CLEAR: SAFE TO CLOSE";
+      bannerText.textContent = description;
+      statusBadge.hidden = false;
+      statusBadge.textContent = stay ? "DISPUTED RESOLUTION" : "RESOLUTION CONFIRMED";
+      closeBox.className = "close-box" + (stay ? " stay" : "");
+      closeHeading.textContent = stay
+        ? "SHIFT CLOSE BLOCKED: EVIDENCE OF RECURRING ISSUE"
+        : "SHIFT CLOSE CLEAR: SAFE TO CLOSE";
+    }
+
+    function entryFromMemory(memory) {
+      const at = memoryDate(memory.text) || new Date();
+      return {
+        id: memory.id || cleanMemoryText(memory.text),
+        at,
+        display: memoryTime(memory.text),
+        source: sourceLabel(memory),
+        message: cleanMemoryText(memory.text),
+      };
     }
 
     function expandEvidence() {
+      result.hidden = false;
       memories.hidden = false;
       evidenceToggle.setAttribute("aria-expanded", "true");
       requestAnimationFrame(() => {
         const rect = memories.getBoundingClientRect();
-        const fullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight - 8;
+        const fullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight - 8 && rect.height > 0;
         if (!fullyVisible) {
           memories.scrollIntoView({ behavior: "smooth", block: "start" });
         }
@@ -668,8 +831,11 @@
     function renderDecision(data) {
       const stay = isStay(data.answer);
       const cited = Array.isArray(data.citedMemories) ? data.citedMemories : [];
-      const count = Number(data.evidenceCount) || 0;
-      setVerdict(stay, explanationFromAnswer(data.answer, stay, cited, count));
+      const count = Number(data.evidenceCount) || cited.length || 0;
+      const priorCount = cited.filter((memory) => !isHandoff(memory)).length;
+      const description = explanationFromAnswer(data.answer, stay, cited, count);
+      answer.textContent = data.answer || (stay ? "No, stay" : "Yes, safe to close");
+      recurrencePill.textContent = recurrenceLabel(priorCount);
       evidenceToggle.textContent = evidenceLabel(count);
       memories.replaceChildren();
       memories.hidden = true;
@@ -691,21 +857,12 @@
           body.textContent = evidencePrefix(memory) + " " + cleanMemoryText(memory.text);
           item.append(time, body);
           memories.append(item);
-          if (memory.context === "live shift handoff note" && memory.id && !sessionEntries.some((entry) => entry.id === memory.id)) {
-            const when = String(memory.text || "").match(/When:\s*(\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2})?)?)/);
-            const at = when ? new Date(when[1]) : new Date();
-            sessionEntries.push({
-              id: memory.id,
-              at: Number.isNaN(at.getTime()) ? new Date() : at,
-              actor: "Handoff note",
-              message: cleanMemoryText(memory.text).replace(/\n/g, " "),
-            });
-          }
         });
       }
+      citedEntries = cited.map(entryFromMemory);
       renderLog();
       result.hidden = false;
-      showBanner(stay);
+      showBanner(stay, description);
     }
 
     function runCloseCheck() {
@@ -713,7 +870,10 @@
       errorLine.textContent = "";
       closeButton.disabled = true;
       closeButton.textContent = "Checking…";
-      checkInFlight = postJson("/can-i-close", { ticket: "billing-webhook" })
+      checkInFlight = postJson("/can-i-close", {
+        ticket: "billing-webhook",
+        documentId: lastNoteId || undefined,
+      })
         .then((data) => {
           renderDecision(data);
         })
@@ -728,7 +888,23 @@
       return checkInFlight;
     }
 
+    function applyTheme(theme) {
+      root.dataset.theme = theme;
+      const dark = theme === "dark";
+      themeLabel.textContent = dark ? "Dark" : "Light";
+      themeIcon.setAttribute("d", dark ? SUN_ICON : MOON_ICON);
+      themeToggle.setAttribute("aria-pressed", dark ? "true" : "false");
+    }
+
+    themeToggle.addEventListener("click", () => {
+      applyTheme(root.dataset.theme === "dark" ? "light" : "dark");
+    });
+
     viewEvidence.addEventListener("click", () => {
+      expandEvidence();
+    });
+
+    deepDive.addEventListener("click", () => {
       expandEvidence();
     });
 
@@ -736,6 +912,7 @@
       const open = memories.hidden;
       memories.hidden = !open;
       evidenceToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) expandEvidence();
     });
 
     compose.addEventListener("submit", async (event) => {
@@ -750,15 +927,21 @@
       noteStatus.textContent = "Retaining…";
       try {
         const saved = await postJson("/handoff-note", { note });
+        lastNoteId = saved.documentId || "";
         noteInput.value = "";
         noteStatus.textContent = "";
         sessionEntries.push({
           id: saved.documentId || "handoff-" + Date.now(),
           at: new Date(),
-          actor: "Handoff note",
+          display: stamp(new Date()),
+          source: "Handoff note",
           message: note,
         });
         renderLog();
+        noteStatus.textContent = "Checking this note…";
+        if (checkInFlight) await checkInFlight;
+        await runCloseCheck();
+        noteStatus.textContent = "";
       } catch (err) {
         noteStatus.textContent = "";
         errorLine.textContent = err.message;
@@ -779,7 +962,9 @@
       try {
         if (checkInFlight) await checkInFlight;
         await postJson("/reset-demo", {});
+        lastNoteId = "";
         sessionEntries.splice(0, sessionEntries.length);
+        citedEntries = [];
         renderLog();
         await runCloseCheck();
       } catch (err) {
@@ -790,9 +975,8 @@
       }
     });
 
+    applyTheme("dark");
     renderLog();
-    tickComposeClock();
-    setInterval(tickComposeClock, 30000);
     runCloseCheck();
   </script>
 </body>

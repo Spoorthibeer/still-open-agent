@@ -101,6 +101,55 @@ async function recallTicket(ticket) {
   return groupByIncident(results);
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function listDocumentIds() {
+  const ids = [];
+  let offset = 0;
+  for (;;) {
+    const page = await hindsight.listDocuments(BANK_ID, { limit: 100, offset });
+    const items = Array.isArray(page?.items) ? page.items : [];
+    for (const item of items) {
+      if (item?.id) ids.push(item.id);
+    }
+    if (items.length < 100) return ids;
+    offset += items.length;
+  }
+}
+
+const RECALL_RETRY_MS = [0, 600, 1200, 2000, 3000, 4000, 5000];
+
+async function recallBankMemories(ticket, documentId) {
+  let aligned = [];
+  for (let attempt = 0; attempt < RECALL_RETRY_MS.length; attempt += 1) {
+    if (RECALL_RETRY_MS[attempt]) await sleep(RECALL_RETRY_MS[attempt]);
+    const [documentIds, recalled] = await Promise.all([
+      listDocumentIds(),
+      recallTicket(ticket),
+    ]);
+    const byId = new Map(recalled.map((memory) => [memory.id, memory]));
+    const ids = documentIds.slice();
+    if (documentId && byId.has(documentId) && !ids.includes(documentId)) {
+      ids.push(documentId);
+    }
+    aligned = ids
+      .filter((id) => byId.has(id))
+      .map((id, index) => ({ ...byId.get(id), index: index + 1 }));
+    const missing = documentIds.filter((id) => !byId.has(id));
+    const noteReady = !documentId || byId.has(documentId);
+    if (missing.length === 0 && noteReady) return aligned;
+    console.log(
+      `[hindsight] Recall is behind the bank (${missing.join(", ") || documentId}). Retrying.`
+    );
+  }
+  if (documentId && !aligned.some((memory) => memory.id === documentId)) {
+    console.error(`[hindsight] ${documentId} was still not recallable after retries.`);
+  }
+  return aligned;
+}
+
 function extractJson(raw) {
   const trimmed = String(raw || "").trim();
   if (trimmed.startsWith("{")) return trimmed;
@@ -111,19 +160,6 @@ function extractJson(raw) {
   return match[0];
 }
 
-function citedFromIndexes(memories, indexes) {
-  const cited = [];
-  const seen = new Set();
-  for (const index of Array.isArray(indexes) ? indexes : []) {
-    const position = Number(index) - 1;
-    if (!Number.isInteger(position) || position < 0 || position >= memories.length) continue;
-    if (seen.has(position)) continue;
-    seen.add(position);
-    cited.push(memories[position]);
-  }
-  return cited;
-}
-
 function withSentence(answer, sentence) {
   if (answer.toLowerCase().includes(sentence.toLowerCase().replace(/\.$/, ""))) return answer;
   const trimmed = answer.replace(/[.\s]+$/, "");
@@ -131,41 +167,18 @@ function withSentence(answer, sentence) {
 }
 
 function decide(memories, parsed) {
-  let cited = citedFromIndexes(memories, parsed?.citedIndexes);
-  let evidenceCount = cited.length;
-
-  if (cited.length === 0) {
-    const reported = Number(parsed?.evidenceCount);
-    const clamped = Number.isFinite(reported)
-      ? Math.max(0, Math.min(memories.length, Math.round(reported)))
-      : 0;
-    if (clamped > 0) cited = memories.slice(0, clamped);
-    evidenceCount = cited.length || clamped;
-  }
-
   let answer = typeof parsed?.answer === "string" ? parsed.answer.trim() : "";
   const latestResolves = parsed?.latestResolves === true;
-  if (!latestResolves) {
-    const olderIncidents = memories.filter((memory) => /historical pattern/i.test(memory.context || ""));
-    const newestNote = memories.find((memory) => memory.context === "live shift handoff note");
-    if (olderIncidents.length >= 2 && evidenceCount < olderIncidents.length) {
-      const used = new Set(cited.map((memory) => memory.id));
-      for (const memory of olderIncidents) {
-        if (!used.has(memory.id)) cited.push(memory);
-      }
-      if (newestNote && !used.has(newestNote.id)) cited.push(newestNote);
-      evidenceCount = cited.length;
-    }
-  }
+  const evidenceCount = memories.length;
 
   if (latestResolves) {
     if (!/^yes,\s*safe to close\b/i.test(answer)) {
-      answer = `Yes, safe to close. ${answer}`.trim();
+      answer = "Yes, safe to close.";
     }
     answer = withSentence(answer, "The latest note indicates this was actually fixed.");
   } else if (evidenceCount >= 2) {
     if (!/^no,\s*stay\b/i.test(answer)) {
-      answer = `No, stay. ${answer}`.trim();
+      answer = "No, stay.";
     }
     answer = withSentence(answer, "The pattern continues.");
   } else if (!/^yes,\s*safe to close\b/i.test(answer)) {
@@ -174,7 +187,7 @@ function decide(memories, parsed) {
 
   return {
     answer,
-    citedMemories: cited.map(publicMemory),
+    citedMemories: memories.map(publicMemory),
     evidenceCount,
   };
 }
@@ -269,6 +282,7 @@ app.post("/handoff-note", async (req, res) => {
       async: false,
     });
     console.log(`[hindsight] Retained handoff note ${documentId}.`);
+    await recallBankMemories(DEFAULT_TICKET, documentId);
     return res.json({ ok: true, documentId });
   } catch (err) {
     logApiError("hindsight", err);
@@ -282,9 +296,12 @@ app.post("/can-i-close", async (req, res) => {
       ? req.body.ticket.trim()
       : DEFAULT_TICKET;
 
+  const documentId =
+    typeof req.body?.documentId === "string" ? req.body.documentId.trim() : "";
+
   let memories;
   try {
-    memories = await recallTicket(ticket);
+    memories = await recallBankMemories(ticket, documentId);
     console.log(`[hindsight] Recalled ${memories.length} memories for "${ticket}".`);
     for (const memory of memories) {
       console.log(`[hindsight] ${memory.index}. ${memory.text}`);
